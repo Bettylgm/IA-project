@@ -28,7 +28,7 @@ def is_valid_move(board, car_positions, car, new_positions):
     return True
  
 def move_car(board, car_positions, car, new_positions):
-    # Borrar la posición actual del auto
+    # Borrar la posición actual del autooo
     for pos in car_positions[car]:
         board[pos[0]][pos[1]] = '.'
     # Mover el auto a la nueva posición
