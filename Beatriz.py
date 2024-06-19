@@ -3,7 +3,7 @@ import random
 
 class Bobo:
    def __init__(self, board=None, exit_row=2):
-       self.exit_row = exit_row  # Ensure exit_row is initialized first
+       self.exit_row = exit_row  # Ensure exit_row is initialized firstt
        if board is None:
            self.board = self.create_board()
        else:
@@ -17,7 +17,7 @@ class Bobo:
            "T": 2,
            "P": 2,
        }
-       # Place the "A" car horizontally on the winning row
+       # Place the "A" car horizontally on the winning roww
        winning_car_a = random.randint(0, 4)
        for i in range(2):
            board[self.exit_row][winning_car_a + i] = "A"
