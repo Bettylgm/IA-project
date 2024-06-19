@@ -4,7 +4,7 @@ from collections import deque
 import heapq
 
 def heuristic(state, target_pos):
-    a_pos = state.car_positions['A'][0]  # Asumiendo que 'A' está horizontal y solo necesitamos la primera parte
+    a_pos = state.car_positions['A'][0]  # Asumiendo que 'A' está horizontal y solo necesitamos la primera partee
     return abs(a_pos[0] - target_pos[0]) + abs(a_pos[1] - target_pos[1])
 
 def a_star(initial_state, target_pos, horizontal_cars):
