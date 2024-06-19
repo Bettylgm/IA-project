@@ -68,7 +68,7 @@ def find_target_pos(board):
             if cell == '0':
                 return [i, j]
 
-# Función para escribir las métricas de rendimiento en un archivo de texto
+# Función para escribir las métricas de rendimiento en un archivo de textoo
 def write_output(file_path, path, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
     with open(file_path, 'w', encoding="utf-8") as file:
         file.write(f"Lista de movimientos: {path}\n")
