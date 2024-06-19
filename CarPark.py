@@ -146,7 +146,7 @@ def main():
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
         
-        # path, nodes_expanded, search_depth, max_search_depth = algorithms['DFS'](board, car_positions['A'][0], target_pos)
+        # Aquí van las llamadas de los algoritmos
         
         end_time = time.time()
         final_memory = process.memory_info().rss
@@ -158,23 +158,7 @@ def main():
         
       #  heuristics = {'Heuristic 1': heuristic1, 'Heuristic 2': heuristic2, 'Heuristic 3': heuristic3}
  
-        # # Mostrar al usuario las opciones de autos para mover
-        # print("Autos disponibles para mover: ", ', '.join(car_positions.keys()))
-        # car_to_move = input("Seleccione el auto que desea mover: ").strip().upper()
-        
-        # if car_to_move not in car_positions:
-        #     print("Auto no válido. Intente de nuevo.")
-        #     continue
- 
-        # print("Ingrese su movimiento para el auto {} (w: arriba, s: abajo, a: izquierda, d: derecha): ".format(car_to_move))
-        # move = msvcrt.getch().decode('utf-8').lower()
-        # new_positions = get_new_positions(car_positions, car_to_move, move, horizontal_cars[car_to_move])
- 
-        # if is_valid_move(board, car_positions, car_to_move, new_positions):
-        #     move_car(board, car_positions, car_to_move, new_positions)
-        # else:
-        #     print("¡Alerta! Movimiento no válido o te has chocado con un obstáculo.")
-        #     input("Presione Enter para continuar: ")
+       
  
         # write_output()
         if board[target_pos[0]][target_pos[1]] == 'A':
