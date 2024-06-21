@@ -3,8 +3,6 @@ import time
 from collections import deque
 import psutil
 
-#samil quezada 
-
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -71,15 +69,15 @@ def find_target_pos(board):
                 return [i, j]
 
 # Función para escribir las métricas de rendimiento en un archivo de textoo
-def write_output(file_path, solution, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
+def write_output(file_path, path, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
     with open(file_path, 'w', encoding="utf-8") as file:
-        moves = [state.get_move() for state in solution[1:]]  # Excluimos el estado inicial
+        moves = [state.get_move() for state in path if state.get_move() is not None]
         file.write(f"Lista de movimientos: {moves}\n")
         file.write(f"Costo de la ruta: {cost}\n")
         file.write(f"Cantidad de nodos expandidos: {nodes_expanded}\n")
         file.write(f"Profundidad: {search_depth}\n")
         file.write(f"Máxima profundidad de la búsqueda: {max_search_depth}\n")
-        file.write(f"Tiempo de ejecución: {running_time:.2f} segundos\n")
+        file.write(f"Tiempo de ejecución: {running_time:.6f} segundos\n")
         file.write(f"Máxima memoria RAM consumida: {max_ram_usage:.2f} MB\n")
 
 class GameState:
@@ -110,67 +108,82 @@ class GameState:
                     successors.append(GameState(new_board, new_car_positions, self.moves + 1, self))
         return successors
 
-    def get_move(self):
-            if not self.parent:
-                return "Inicial"
-            for car in self.car_positions:
-                if self.car_positions[car] != self.parent.car_positions[car]:
-                    old_pos = self.parent.car_positions[car][0]
-                    new_pos = self.car_positions[car][0]
-                    if old_pos[0] < new_pos[0]:
-                        return f"{car}: Abajo"
-                    elif old_pos[0] > new_pos[0]:
-                        return f"{car}: Arriba"
-                    elif old_pos[1] < new_pos[1]:
-                        return f"{car}: Derecha"
-                    elif old_pos[1] > new_pos[1]:
-                        return f"{car}: Izquierda"
-            return "Desconocido"
-
     def print_path(self):
         if self.parent:
             self.parent.print_path()
         print_board(self.board)
 
-#DFS con output
+    def get_move(self):
+        if not self.parent:
+            return None
+        for car in self.car_positions:
+            if self.car_positions[car] != self.parent.car_positions[car]:
+                old_pos = self.parent.car_positions[car][0]
+                new_pos = self.car_positions[car][0]
+                if old_pos[0] < new_pos[0]:
+                    return f'{car}-D'
+                elif old_pos[0] > new_pos[0]:
+                    return f'{car}-U'
+                elif old_pos[1] < new_pos[1]:
+                    return f'{car}-R'
+                else:
+                    return f'{car}-L'
+        return None
+
+# deep first search
 def dfs(initial_state, target_pos, horizontal_cars):
-    stack = [initial_state]
     visited = set()
+    stack = [initial_state]
     nodes_expanded = 0
     max_search_depth = 0
 
     while stack:
         state = stack.pop()
-        
         if state.is_goal(target_pos):
             path = []
             temp = state
-            while temp:
+            while temp.parent:
                 path.append(temp)
                 temp = temp.parent
             path.reverse()
 
-            write_output("output.txt", path, state.moves, nodes_expanded, len(path) - 1, max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
+            write_output("output_dfs.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
 
-            return state, path, nodes_expanded, len(path) - 1, max_search_depth
+            return state, path, nodes_expanded, len(path), max_search_depth
 
         if state not in visited:
             visited.add(state)
-            nodes_expanded += 1
-            max_search_depth = max(max_search_depth, state.moves)
-
-            for successor in state.get_successors(horizontal_cars):
+            successors = state.get_successors(horizontal_cars)
+            successors.sort(key=lambda x: (x.car_positions.keys(), ['D', 'L', 'R', 'U'].index(get_move_direction(state, x))), reverse=True)
+            for successor in successors:
                 if successor not in visited:
                     stack.append(successor)
+                    nodes_expanded += 1
+                    max_search_depth = max(max_search_depth, successor.moves)
 
     return None, [], nodes_expanded, 0, max_search_depth
+
+def get_move_direction(parent_state, child_state):
+    for car in parent_state.car_positions:
+        if parent_state.car_positions[car] != child_state.car_positions[car]:
+            old_pos = parent_state.car_positions[car][0]
+            new_pos = child_state.car_positions[car][0]
+            if old_pos[0] < new_pos[0]:
+                return 'D'
+            elif old_pos[0] > new_pos[0]:
+                return 'U'
+            elif old_pos[1] < new_pos[1]:
+                return 'R'
+            else:
+                return 'L'
+    return 'U'
 
 # Implementación del algoritmo BFS
 def bfs(initial_state, target_pos, horizontal_cars):
     visited = set()
     queue = deque([initial_state])
-    nodes_expanded = 0  
-    max_search_depth = 0 
+    nodes_expanded = 0  # Métrica de rendimiento: nodos expandidos
+    max_search_depth = 0  # Métrica de rendimiento: máxima profundidad de búsqueda
 
     while queue:
         state = queue.popleft()
@@ -182,7 +195,9 @@ def bfs(initial_state, target_pos, horizontal_cars):
                 temp = temp.parent
             path.reverse()
 
+            # Llamar a la función para escribir las métricas de rendimiento
             write_output("output.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
+
             return state, path, nodes_expanded, len(path), max_search_depth
 
         visited.add(state)
@@ -221,7 +236,7 @@ def start():
     level_number = int(input("Digite el número del nivel: "))
 
     file_path = f"D:\IA-project\Levels\Level{level_number}.txt"
-    if not os.path.isfile(file_path):
+    if not os.path.isfile(file_path): 
         input("Nivel no válido o archivo no encontrado, presione Enter para continuar: ")
         clear()
         return start()
@@ -230,19 +245,8 @@ def start():
         level = [list(line) for line in f.read().splitlines()]
     return level
 
-def select_algorithm():
-    while True:
-        print("\nSeleccione el algoritmo que desea utilizar:")
-        print("1. Breadth First Search (BFS)")
-        print("2. Depth First Search (DFS)")
-        choice = input("Ingrese el número de eleccion: ")
-        if choice in ['1', '2']:
-            return 'bfs' if choice == '1' else 'dfs'
-        print("Opción no válida. Por favor, intente de nuevo.")
-
 def main():
     board = start()
-    algorithm = select_algorithm()
 
     while True:
         clear()
@@ -250,39 +254,47 @@ def main():
         horizontal_cars = find_orientations(car_positions)
         target_pos = find_target_pos(board)
 
+        print("Seleccione el algoritmo de búsqueda:")
+        print("1. BFS (Breadth-First Search)")
+        print("2. DFS (Depth-First Search)")
+        choice = input("Ingrese su elección (1 o 2): ")
+
         start_time = time.time()
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
 
         initial_state = GameState(board, car_positions)
-        
-        if algorithm == 'bfs':
+
+        if choice == '1':
             solution, path, nodes_expanded, search_depth, max_search_depth = bfs(initial_state, target_pos, horizontal_cars)
-        else:
+            output_file = "output_bfs.txt"
+        elif choice == '2':
             solution, path, nodes_expanded, search_depth, max_search_depth = dfs(initial_state, target_pos, horizontal_cars)
+            output_file = "output_dfs.txt"
+        else:
+            print("Opción no válida.")
+            continue
 
         end_time = time.time()
         final_memory = process.memory_info().rss
         running_time = end_time - start_time
-        max_ram_usage = (final_memory - initial_memory) / (1024 * 1024)
+        max_ram_usage = (final_memory - initial_memory) / 1024 / 1024
 
-        print("\nTablero final:")
-        print_board(board)
-        print("\nSolución encontrada:")
-        solution.print_path()
-
-        print(f"\nAlgoritmo utilizado: {'BFS' if algorithm == 'bfs' else 'DFS'}")
-        print(f"Nodos expandidos: {nodes_expanded}")
-        print(f"Profundidad de la solución: {search_depth}")
-        print(f"Máxima profundidad de búsqueda: {max_search_depth}")
-        print(f"Tiempo de ejecución: {running_time:.2f} segundos")
-        print(f"Máxima memoria RAM consumida: {max_ram_usage:.2f} MB")
+        if solution:
+            print("\nTablero final:")
+            print_board(solution.board)
+            print("\nSolución encontrada:")
+            solution.print_path()
+            
+            write_output(output_file, path, solution.moves, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage)
+            print(f"\nLas métricas de rendimiento se han guardado en {output_file}")
+        else:
+            print("\nNo se encontró solución.")
 
         input("\nPresione Enter para continuar...")
 
         clear()
         board = start()
-        algorithm = select_algorithm()
 
 if __name__ == "__main__":
     main()
