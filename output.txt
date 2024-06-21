@@ -1,0 +1,7 @@
+Lista de movimientos: ['A: Derecha', 'C: Abajo', 'A: Derecha', 'D: Abajo', 'A: Derecha', 'A: Derecha', 'A: Derecha']
+Costo de la ruta: 7
+Cantidad de nodos expandidos: 128
+Profundidad: 7
+Máxima profundidad de la búsqueda: 8
+Tiempo de ejecución: 0.042473554611206055 segundos
+Máxima memoria RAM consumida: -0.00390625 MB
