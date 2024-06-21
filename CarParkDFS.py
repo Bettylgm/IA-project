@@ -71,15 +71,16 @@ def find_target_pos(board):
                 return [i, j]
 
 # Función para escribir las métricas de rendimiento en un archivo de textoo
-def write_output(file_path, path, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
+def write_output(file_path, solution, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
     with open(file_path, 'w', encoding="utf-8") as file:
-        file.write(f"Lista de movimientos: {path}\n")
+        moves = [state.get_move() for state in solution[1:]]  # Excluimos el estado inicial
+        file.write(f"Lista de movimientos: {moves}\n")
         file.write(f"Costo de la ruta: {cost}\n")
         file.write(f"Cantidad de nodos expandidos: {nodes_expanded}\n")
         file.write(f"Profundidad: {search_depth}\n")
         file.write(f"Máxima profundidad de la búsqueda: {max_search_depth}\n")
-        file.write(f"Tiempo de ejecución: {running_time} segundos\n")
-        file.write(f"Máxima memoria RAM consumida: {max_ram_usage} MB\n")
+        file.write(f"Tiempo de ejecución: {running_time:.2f} segundos\n")
+        file.write(f"Máxima memoria RAM consumida: {max_ram_usage:.2f} MB\n")
 
 class GameState:
     def __init__(self, board, car_positions, moves=0, parent=None):
@@ -109,6 +110,23 @@ class GameState:
                     successors.append(GameState(new_board, new_car_positions, self.moves + 1, self))
         return successors
 
+    def get_move(self):
+            if not self.parent:
+                return "Inicial"
+            for car in self.car_positions:
+                if self.car_positions[car] != self.parent.car_positions[car]:
+                    old_pos = self.parent.car_positions[car][0]
+                    new_pos = self.car_positions[car][0]
+                    if old_pos[0] < new_pos[0]:
+                        return f"{car}: Abajo"
+                    elif old_pos[0] > new_pos[0]:
+                        return f"{car}: Arriba"
+                    elif old_pos[1] < new_pos[1]:
+                        return f"{car}: Derecha"
+                    elif old_pos[1] > new_pos[1]:
+                        return f"{car}: Izquierda"
+            return "Desconocido"
+
     def print_path(self):
         if self.parent:
             self.parent.print_path()
@@ -127,14 +145,14 @@ def dfs(initial_state, target_pos, horizontal_cars):
         if state.is_goal(target_pos):
             path = []
             temp = state
-            while temp.parent:
+            while temp:
                 path.append(temp)
                 temp = temp.parent
             path.reverse()
 
-            write_output("output.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
+            write_output("output.txt", path, state.moves, nodes_expanded, len(path) - 1, max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
 
-            return state, path, nodes_expanded, len(path), max_search_depth
+            return state, path, nodes_expanded, len(path) - 1, max_search_depth
 
         if state not in visited:
             visited.add(state)
