@@ -32,14 +32,14 @@ def move_car(board, car_positions, car, new_positions):
 def get_new_positions(car_positions, car_to_move, move, horizontal):
     car_pos = car_positions[car_to_move]
     if horizontal:
-        if move == 'a':
+        if move == 'l':
             return [[pos[0], pos[1] - 1] for pos in car_pos]
-        elif move == 'd':
+        elif move == 'r':
             return [[pos[0], pos[1] + 1] for pos in car_pos]
     else:
-        if move == 'w':
+        if move == 'u':
             return [[pos[0] - 1, pos[1]] for pos in car_pos]
-        elif move == 's':
+        elif move == 'd':
             return [[pos[0] + 1, pos[1]] for pos in car_pos]
     return car_pos
 
@@ -68,10 +68,10 @@ def find_target_pos(board):
             if cell == '0':
                 return [i, j]
 
-# Función para escribir las métricas de rendimiento en un archivo de textoo
+# Función para escribir las métricas de rendimiento en un archivo de texto
 def write_output(file_path, path, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
     with open(file_path, 'w', encoding="utf-8") as file:
-        file.write(f"Lista de movimientos: {path}\n")
+        file.write(f"Lista de movimientos: {[state.get_move() for state in path]}\n")
         file.write(f"Costo de la ruta: {cost}\n")
         file.write(f"Cantidad de nodos expandidos: {nodes_expanded}\n")
         file.write(f"Profundidad: {search_depth}\n")
@@ -92,13 +92,17 @@ class GameState:
     def __hash__(self):
         return hash(str(self.board))
 
+    def __repr__(self):
+        return f"GameState(moves={self.moves}, board={self.board})"
+
     def is_goal(self, target_pos):
         return self.board[target_pos[0]][target_pos[1]] == 'A'
 
     def get_successors(self, horizontal_cars):
         successors = []
-        for car in self.car_positions:
-            for move in ['w', 'a', 's', 'd']:
+        move_order = ['u', 'd', 'l', 'r']  # Orden UDLR: Up, Down, Left, Right
+        for car in sorted(self.car_positions):  # Ordenar los carros por el menor valor ASCII
+            for move in move_order:
                 new_positions = get_new_positions(self.car_positions, car, move, horizontal_cars[car])
                 if is_valid_move(self.board, self.car_positions, car, new_positions):
                     new_board = [row[:] for row in self.board]
@@ -106,6 +110,23 @@ class GameState:
                     move_car(new_board, new_car_positions, car, new_positions)
                     successors.append(GameState(new_board, new_car_positions, self.moves + 1, self))
         return successors
+
+    def get_move(self):
+        if not self.parent:
+            return "Inicial"
+        for car in self.car_positions:
+            if self.car_positions[car] != self.parent.car_positions[car]:
+                old_pos = self.parent.car_positions[car][0]
+                new_pos = self.car_positions[car][0]
+                if old_pos[0] < new_pos[0]:
+                    return f"{car}: Abajo"
+                elif old_pos[0] > new_pos[0]:
+                    return f"{car}: Arriba"
+                elif old_pos[1] < new_pos[1]:
+                    return f"{car}: Derecha"
+                elif old_pos[1] > new_pos[1]:
+                    return f"{car}: Izquierda"
+        return "Desconocido"
 
     def print_path(self):
         if self.parent:
@@ -119,6 +140,8 @@ def bfs(initial_state, target_pos, horizontal_cars):
     nodes_expanded = 0  # Métrica de rendimiento: nodos expandidos
     max_search_depth = 0  # Métrica de rendimiento: máxima profundidad de búsqueda
 
+    start_time = time.time()
+
     while queue:
         state = queue.popleft()
         if state.is_goal(target_pos):
@@ -129,8 +152,15 @@ def bfs(initial_state, target_pos, horizontal_cars):
                 temp = temp.parent
             path.reverse()
 
+            # Captura del tiempo de fin y memoria final
+            end_time = time.time()
+            process = psutil.Process(os.getpid())
+            final_memory = process.memory_info().rss
+            running_time = end_time - start_time
+            max_ram_usage = (final_memory - process.memory_info().rss) / (1024 * 1024)
+
             # Llamar a la función para escribir las métricas de rendimiento
-            write_output("output.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
+            write_output("output.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, running_time, max_ram_usage)
 
             return state, path, nodes_expanded, len(path), max_search_depth
 
@@ -169,7 +199,7 @@ def start():
 
     level_number = int(input("Digite el número del nivel: "))
 
-    file_path = f"CarParkingGame/Levels/Level{level_number}.txt"
+    file_path = f"Levels/Level{level_number}.txt"
     if not os.path.isfile(file_path):  # Verificar si el archivo existe
         input("Nivel no válido o archivo no encontrado, presione Enter para continuar: ")
         clear()
@@ -188,24 +218,19 @@ def main():
         horizontal_cars = find_orientations(car_positions)
         target_pos = find_target_pos(board)
 
-        # Captura del tiempo de inicio y memoria inicial
-        start_time = time.time()
-        process = psutil.Process(os.getpid())
-        initial_memory = process.memory_info().rss
-
         initial_state = GameState(board, car_positions)
         # Ejecución del algoritmo BFS
         solution, path, nodes_expanded, search_depth, max_search_depth = bfs(initial_state, target_pos, horizontal_cars)
 
         # Captura del tiempo de fin y memoria final
-        end_time = time.time()
+        process = psutil.Process(os.getpid())
         final_memory = process.memory_info().rss
-        running_time = end_time - start_time
-        max_ram_usage = (final_memory - initial_memory) / (1024 * 1024)
+        running_time = time.time()
+        max_ram_usage = (final_memory - process.memory_info().rss) / (1024 * 1024)
 
         # Imprimir el tablero final y la solución
         print("\nTablero final:")
-        print_board(board)
+        print_board(solution.board)  # Imprimir el tablero de la solución
         print("\nSolución encontrada:")
         solution.print_path()
 
