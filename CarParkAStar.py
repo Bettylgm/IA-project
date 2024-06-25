@@ -4,6 +4,7 @@ import time
 from collections import deque
 
 import psutil
+
 from Heuristics import (blocking_cars_heuristic, distance_goal_heuristic,
                         free_space_heuristic)
 
@@ -218,28 +219,38 @@ def bfs(initial_state, target_pos, horizontal_cars):
     return None, [], nodes_expanded, 0, max_search_depth
 
 # algoritmo A*
-def heuristics(state, target_pos, max_value, weights):
+def heuristics(state, target_pos, max_value, weights, heuristic_types):
     a_pos = state.car_positions['A'][0]
-    blocking = blocking_cars_heuristic(state.board, a_pos, target_pos, max_value, weights['blocking'])
-    free_space = free_space_heuristic(state.board, a_pos, max_value, weights['free_space'])
-    distance = distance_goal_heuristic(state.board, a_pos, target_pos, max_value, weights['distance'])
-    
-    combined = blocking + free_space + distance
-    return combined
-    
-heuristic_weights = {
+    total_heuristic = 0
+    if 'blocking' in heuristic_types:
+        total_heuristic += blocking_cars_heuristic(state.board, a_pos, target_pos, max_value, weights['blocking'])
+    if 'free_space' in heuristic_types:
+        total_heuristic += free_space_heuristic(state.board, a_pos, max_value, weights['free_space'])
+    if 'distance' in heuristic_types:
+        total_heuristic += distance_goal_heuristic(state.board, a_pos, target_pos, max_value, weights['distance'])
+   
+    return total_heuristic
+   
+heuristic_weights_1 = {
     'blocking': 0.4,
     'free_space': 0.3,
     'distance': 0.3
 }
 
-def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
-    open_set = []
-    heapq.heappush(open_set, (heuristics(initial_state, target_pos, max_value, weights), initial_state))
-    visited = set()
-    nodes_expanded = 0  
-    max_search_depth = 0  
+heuristic_weights_2 = {
+    'blocking': 0.4,
+    'free_space': 0.1,
+    'distance': 0.2
+}
 
+
+def a_star(initial_state, target_pos, horizontal_cars, max_value, weights, heuristic_types):
+    open_set = []
+    heapq.heappush(open_set, (heuristics(initial_state, target_pos, max_value, weights, heuristic_types), initial_state))
+    visited = set()
+    nodes_expanded = 0  # Performance metric: expanded nodes
+    max_search_depth = 0  # Performance metric: maximum search depth
+ 
     while open_set:
         _, state = heapq.heappop(open_set)
         if state.is_goal(target_pos):
@@ -249,21 +260,21 @@ def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
                 path.append(temp)
                 temp = temp.parent
             path.reverse()
-
+           
+           
+ 
             return state, path, nodes_expanded, len(path), max_search_depth
-
+ 
         visited.add(state)
         for successor in state.get_successors(horizontal_cars):
             if successor not in visited:
-                h = heuristics(successor, target_pos, max_value, weights)
+                h = heuristics(successor, target_pos, max_value, weights, heuristic_types)
                 heapq.heappush(open_set, (successor.moves + h, successor))
                 visited.add(successor)
-                nodes_expanded += 1  
-                max_search_depth = max(max_search_depth, successor.moves)  
-
+                nodes_expanded += 1  # Increment counter of expanded nodes
+                max_search_depth = max(max_search_depth, successor.moves)  # Update maximum search depth
+ 
     return None, [], nodes_expanded, 0, max_search_depth
-
-
 def start():
     print(r"""
   ___   __   ____    ____   __   ____  __ _    ____  _  _  ____  ____  __    ____
@@ -313,7 +324,7 @@ def main():
         print("1. BFS (Breadth-First Search)")
         print("2. DFS (Depth-First Search)")
         print("3. A* (A Star Search)")
-        choice = input("Ingrese su elección (1 o 2): ")
+        choice = input("Ingrese su elección (1, 2, O 3): ")
 
         start_time = 0
         process = psutil.Process(os.getpid())
@@ -330,25 +341,91 @@ def main():
             solution, path, nodes_expanded, search_depth, max_search_depth = dfs(initial_state, target_pos, horizontal_cars)
             output_file = "output_dfs.txt"
         elif choice == '3':
-            # print("Seleccione la heurística para A*:")
-            # print("1- Cantidad de vehículos bloqueando el camino")
-            # print("2- Espacio libre adelante")
-            # print("3- Distancia total hasta el objetivo")
-            # heuristic_choice = input("Digite el número de la heurística: ").strip()
-            max_value = len(board[0])  # Assuming the width of the board as max value for normalization
+            max_value = len(board[0])  
             
-            # if heuristic_choice == '1':
-            #     heuristic_type = 'blocking'
-            # elif heuristic_choice == '2':
-            #     heuristic_type = 'free_space'
-            # elif heuristic_choice == '3':
-            #     heuristic_type = 'distance'
-            # else:
-            #     print("Opción de heurística no válida.")
-            #     return
+            print("Seleccione la configuracion de  heurística para A*:")
+            print ("""
+Config 1
+    'blocking': 0.4,
+    'free_space': 0.3,
+    'distance': 0.3
+
+Config 2
+    'blocking': 0.4,
+    'free_space': 0.1,
+    'distance': 0.2
+""")
+            config = int(input("- "))
+            if config == 1:
+                heuristic_weights = heuristic_weights_1
+            elif config == 2:
+                heuristic_weights = heuristic_weights_2
+            else:
+                print("Opción inválida")
+                return
+            heuristic_types = []    
+            quantity_heuristics = input("Seleccione el numero de heurísticas para A*: ")
             
+            if quantity_heuristics == '1':
+                print("Seleccione la heuristica que desea usar: ")
+                print("1- Cantidad de vehículos bloqueando el camino")
+                print("2- Espacio libre adelante")
+                print("3- Distancia total hasta el objetivo")
+                
+                heuristic_choice = input("Digite el número de la heurística: ").strip()
+                if heuristic_choice == '1':
+                    heuristic_types.append('blocking')
+                elif heuristic_choice == '2':
+                    heuristic_types.append('free_space')
+                elif heuristic_choice == '3':
+                    heuristic_types.append('distance')
+                else:
+                    print("Opción de heurística no válida.")
+                    return
+                
+                
+            elif quantity_heuristics == '2':
+                print("Seleccione la primera heuristica que desea usar: ")
+                print("1- Cantidad de vehículos bloqueando el camino")
+                print("2- Espacio libre adelante")
+                print("3- Distancia total hasta el objetivo")
+                
+                heuristic_choice = input("Digite el número de la heurística: ").strip()
+                if heuristic_choice == '1':
+                    heuristic_types.append('blocking')
+                elif heuristic_choice == '2':
+                    heuristic_types.append('free_space')
+                elif heuristic_choice == '3':
+                    heuristic_types.append('distance')
+                else:
+                    print("Opción de heurística no válida.")
+                    return
+                
+                print("Seleccione la segunda heuristica que desea usar: ")
+                print("1- Cantidad de vehículos bloqueando el camino")
+                print("2- Espacio libre adelante")
+                print("3- Distancia total hasta el objetivo")
+                
+                heuristic_choice = input("Digite el número de la heurística: ").strip()
+                if heuristic_choice == '1':
+                    heuristic_types.append('blocking')
+                elif heuristic_choice == '2':
+                    heuristic_types.append('free_space')
+                elif heuristic_choice == '3':
+                    heuristic_types.append('distance')
+                else:
+                    print("Opción de heurística no válida.")
+                    return
+              
+            elif quantity_heuristics == '3':
+                heuristic_types.append('blocking')
+                heuristic_types.append('free_space')
+                heuristic_types.append('distance')
+                
+            else:
+                print("Opción inválida")
             start_time = time.time()
-            solution, path, nodes_expanded, search_depth, max_search_depth = a_star(initial_state, target_pos, horizontal_cars, max_value, heuristic_weights)
+            solution, path, nodes_expanded, search_depth, max_search_depth = a_star(initial_state, target_pos, horizontal_cars, max_value, heuristic_weights, heuristic_types)    
             output_file = "output_a_star.txt"
         else:
             print("Opción no válida.")
