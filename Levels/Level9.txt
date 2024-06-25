@@ -1,9 +1,9 @@
-....B.CCC
-.......F.
-.AAA...F0
-EEE....F.
-G......F.
-G........
+hh..B.CCC
+.ttt...F.
+.AAA.p.F0
+EEE..p.F.
+G.jjjp.F.
+G..bbb...
 HHIIIII.J
 K.......J
 K...LLLLL
