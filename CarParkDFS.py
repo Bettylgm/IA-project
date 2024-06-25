@@ -20,6 +20,8 @@ def is_valid_move(board, car_positions, car, new_positions):
             return False
         if board[new_pos[0]][new_pos[1]] != '.' and board[new_pos[0]][new_pos[1]] != '0' and board[new_pos[0]][new_pos[1]] != car:
             return False
+        if board[new_pos[0]][new_pos[1]] == '0' and car != 'A':
+            return False
     return True
 
 def move_car(board, car_positions, car, new_positions):
@@ -210,7 +212,7 @@ def start():
 
     level_number = int(input("Digite el número del nivel: "))
 
-    file_path = f"D:\IA-project\Levels\Level{level_number}.txt"
+    file_path = f".\Levels\Level{level_number}.txt"
     if not os.path.isfile(file_path): 
         input("Nivel no válido o archivo no encontrado, presione Enter para continuar: ")
         clear()
