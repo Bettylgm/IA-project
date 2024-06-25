@@ -75,7 +75,7 @@ def find_target_pos(board):
             if cell == '0':
                 return [i, j]
 
-# Función para escribir las métricas de rendimiento en un archivo de textoo
+# funcion de metricas de rendimiento del output
 def write_output(file_path, path, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
     with open(file_path, 'w', encoding="utf-8") as file:
         moves = [state.get_move() for state in path if state.get_move() is not None]
@@ -132,7 +132,6 @@ class GameState:
         return None
     
     def __lt__(self, other):
-        # Comparison method for heapq
         return (self.moves, self.board) < (other.moves, other.board)
     
 def moves_dfs(parent_state, child_state):
@@ -186,12 +185,11 @@ def dfs(initial_state, target_pos, horizontal_cars):
 
     return None, [], nodes_expanded, 0, max_search_depth
 
-# Implementación del algoritmo BFS
 def bfs(initial_state, target_pos, horizontal_cars):
     visited = set()
     queue = deque([initial_state])
-    nodes_expanded = 0  # Métrica de rendimiento: nodos expandidos
-    max_search_depth = 0  # Métrica de rendimiento: máxima profundidad de búsqueda
+    nodes_expanded = 0  
+    max_search_depth = 0 
 
     while queue:
         state = queue.popleft()
@@ -210,11 +208,11 @@ def bfs(initial_state, target_pos, horizontal_cars):
             if successor not in visited:
                 queue.append(successor)
                 visited.add(successor)
-                nodes_expanded += 1  # Incrementar contador de nodos expandidos
-                max_search_depth = max(max_search_depth, successor.moves)  # Actualizar la máxima profundidad de búsqueda
+                nodes_expanded += 1  
+                max_search_depth = max(max_search_depth, successor.moves) 
     return None, [], nodes_expanded, 0, max_search_depth
 
-# Implementación del algoritmo A Star
+# algoritmo A*
 def heuristics(state, target_pos, max_value, weights):
     a_pos = state.car_positions['A'][0]
     blocking = blocking_cars_heuristic(state.board, a_pos, target_pos, max_value, weights['blocking'])
@@ -234,8 +232,8 @@ def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
     open_set = []
     heapq.heappush(open_set, (heuristics(initial_state, target_pos, max_value, weights), initial_state))
     visited = set()
-    nodes_expanded = 0  # Performance metric: expanded nodes
-    max_search_depth = 0  # Performance metric: maximum search depth
+    nodes_expanded = 0  
+    max_search_depth = 0  
 
     while open_set:
         _, state = heapq.heappop(open_set)
@@ -255,8 +253,8 @@ def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
                 h = heuristics(successor, target_pos, max_value, weights)
                 heapq.heappush(open_set, (successor.moves + h, successor))
                 visited.add(successor)
-                nodes_expanded += 1  # Increment counter of expanded nodes
-                max_search_depth = max(max_search_depth, successor.moves)  # Update maximum search depth
+                nodes_expanded += 1  
+                max_search_depth = max(max_search_depth, successor.moves)  
 
     return None, [], nodes_expanded, 0, max_search_depth
 
