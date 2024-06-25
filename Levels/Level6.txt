@@ -1,9 +1,9 @@
 AAA...J.0
 CC..B.J..
 EE.FFFF..
-GHHI..X..
-G..I..X..
-K.LL..X..
-K..MM....
+GHHIu.X..
+G..Iu.X..
+K.LLu.X..
+K..MMbbb.
 NN..O....
 PP..O....
