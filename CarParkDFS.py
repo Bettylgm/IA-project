@@ -89,6 +89,12 @@ class GameState:
         self.moves = moves
         self.parent = parent
         self.last_move = None  
+    
+    def __eq__(self, other):
+        return self.board == other.board
+
+    def __hash__(self):
+        return hash(str(self.board))
 
     def is_goal(self, target_pos):
         return self.board[target_pos[0]][target_pos[1]] == 'A'
@@ -107,10 +113,11 @@ def dfs(initial_state, target_pos, horizontal_cars):
 
     while stack:
         state, path = stack.pop()
+
         if state.is_goal(target_pos):
             write_output("output_dfs.txt", path, len(path), nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
             return state, path, nodes_expanded, len(path), max_search_depth
-
+        
         if state not in visited:
             visited.add(state)
             successors = []
@@ -124,14 +131,12 @@ def dfs(initial_state, target_pos, horizontal_cars):
                         successor = GameState(new_board, new_car_positions, state.moves + 1, state)
                         successor.last_move = f'{car}-{move}'
                         successors.append(successor)
-
             for successor in reversed(successors):
                 if successor not in visited:
                     new_path = path + [successor]
                     stack.append((successor, new_path))
                     nodes_expanded += 1
                     max_search_depth = max(max_search_depth, len(new_path))
-
     return None, [], nodes_expanded, 0, max_search_depth
 
 def get_move_direction(parent_state, child_state):
