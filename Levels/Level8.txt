@@ -1,5 +1,5 @@
-......B..
-CC.......
+.ppp..B..
+CC..jjj..
 EE.FFGGG.
 AAA..X..0
 I..J.X...
