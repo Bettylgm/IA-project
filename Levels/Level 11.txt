@@ -1,12 +1,12 @@
 II.B..CCC..DDD.
 EE..F...GGGG...
 HH..F..........
-...I.JJJ...KKK.
+.....JJJ...KKK.
 ...........LLL.
-.M...NN...O...P
+.M...NN...B...S
 .M..Q....RRRR.S
 .AAAQ...W.....0
-...U.V..W.....X
+.....V..W.....X
 YYYY.V..W.....X
 ....ZV........X
 ....Z..TTT.....
