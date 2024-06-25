@@ -2,8 +2,11 @@ import heapq
 import os
 import time
 from collections import deque
+
 import psutil
-from Heuristics import blocking_cars_heuristic, free_space_heuristic, distance_goal_heuristic
+from Heuristics import (blocking_cars_heuristic, distance_goal_heuristic,
+                        free_space_heuristic)
+
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -215,20 +218,24 @@ def bfs(initial_state, target_pos, horizontal_cars):
     return None, [], nodes_expanded, 0, max_search_depth
 
 # Implementación del algoritmo A Star
-def heuristic(state, target_pos, heuristic_type, max_value):
+def heuristics(state, target_pos, max_value, weights):
     a_pos = state.car_positions['A'][0]
-    if heuristic_type == 'blocking':
-        return blocking_cars_heuristic(state.board, a_pos, target_pos, max_value)
-    elif heuristic_type == 'free_space':
-        return free_space_heuristic(state.board, a_pos, max_value)
-    elif heuristic_type == 'distance':
-        return distance_goal_heuristic(state.board, a_pos, target_pos, max_value)
-    else:
-        return 0
+    blocking = blocking_cars_heuristic(state.board, a_pos, target_pos, max_value, weights['blocking'])
+    free_space = free_space_heuristic(state.board, a_pos, max_value, weights['free_space'])
+    distance = distance_goal_heuristic(state.board, a_pos, target_pos, max_value, weights['distance'])
+    
+    combined = blocking + free_space + distance
+    return combined
+    
+heuristic_weights = {
+    'blocking': 0.4,
+    'free_space': 0.3,
+    'distance': 0.3
+}
 
-def a_star(initial_state, target_pos, horizontal_cars, heuristic_type, max_value):
+def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
     open_set = []
-    heapq.heappush(open_set, (heuristic(initial_state, target_pos, heuristic_type, max_value), initial_state))
+    heapq.heappush(open_set, (heuristics(initial_state, target_pos, max_value, weights), initial_state))
     visited = set()
     nodes_expanded = 0  # Performance metric: expanded nodes
     max_search_depth = 0  # Performance metric: maximum search depth
@@ -248,7 +255,7 @@ def a_star(initial_state, target_pos, horizontal_cars, heuristic_type, max_value
         visited.add(state)
         for successor in state.get_successors(horizontal_cars):
             if successor not in visited:
-                h = heuristic(successor, target_pos, heuristic_type, max_value)
+                h = heuristics(successor, target_pos, max_value, weights)
                 heapq.heappush(open_set, (successor.moves + h, successor))
                 visited.add(successor)
                 nodes_expanded += 1  # Increment counter of expanded nodes
@@ -283,7 +290,7 @@ def start():
 
     level_number = int(input("Digite el número del nivel: "))
 
-    file_path = f"./Levels/Level{level_number}.txt"
+    file_path = f"IA-project\Levels\Level{level_number}.txt"
     if not os.path.isfile(file_path): 
         input("Nivel no válido o archivo no encontrado, presione Enter para continuar: ")
         clear()
@@ -323,25 +330,25 @@ def main():
             solution, path, nodes_expanded, search_depth, max_search_depth = dfs(initial_state, target_pos, horizontal_cars)
             output_file = "output_dfs.txt"
         elif choice == '3':
-            print("Seleccione la heurística para A*:")
-            print("1- Cantidad de vehículos bloqueando el camino")
-            print("2- Espacio libre adelante")
-            print("3- Distancia total hasta el objetivo")
-            heuristic_choice = input("Digite el número de la heurística: ").strip()
+            # print("Seleccione la heurística para A*:")
+            # print("1- Cantidad de vehículos bloqueando el camino")
+            # print("2- Espacio libre adelante")
+            # print("3- Distancia total hasta el objetivo")
+            # heuristic_choice = input("Digite el número de la heurística: ").strip()
             max_value = len(board[0])  # Assuming the width of the board as max value for normalization
             
-            if heuristic_choice == '1':
-                heuristic_type = 'blocking'
-            elif heuristic_choice == '2':
-                heuristic_type = 'free_space'
-            elif heuristic_choice == '3':
-                heuristic_type = 'distance'
-            else:
-                print("Opción de heurística no válida.")
-                return
+            # if heuristic_choice == '1':
+            #     heuristic_type = 'blocking'
+            # elif heuristic_choice == '2':
+            #     heuristic_type = 'free_space'
+            # elif heuristic_choice == '3':
+            #     heuristic_type = 'distance'
+            # else:
+            #     print("Opción de heurística no válida.")
+            #     return
             
             start_time = time.time()
-            solution, path, nodes_expanded, search_depth, max_search_depth = a_star(initial_state, target_pos, horizontal_cars, heuristic_type, max_value)
+            solution, path, nodes_expanded, search_depth, max_search_depth = a_star(initial_state, target_pos, horizontal_cars, max_value, heuristic_weights)
             output_file = "output_a_star.txt"
         else:
             print("Opción no válida.")
