@@ -104,6 +104,20 @@ class GameState:
             self.parent.print_path()
         print_board(self.board)
 
+    def get_successors(state, horizontal_cars):
+        successors = []
+        for car in sorted(state.car_positions.keys()):
+            for move in ['U', 'D', 'L', 'R']:
+                new_positions = get_new_positions(state.car_positions, car, move, horizontal_cars[car])
+                if is_valid_move(state.board, state.car_positions, car, new_positions):
+                    new_board = [row[:] for row in state.board]
+                    new_car_positions = {k: [pos[:] for pos in v] for k, v in state.car_positions.items()}
+                    move_car(new_board, new_car_positions, car, new_positions)
+                    successor = GameState(new_board, new_car_positions, state.moves + 1, state)
+                    successor.last_move = f'{car}-{move}'
+                    successors.append(successor)
+        return successors
+    
 # deep first search
 def dfs(initial_state, target_pos, horizontal_cars):
     visited = set()
@@ -121,7 +135,7 @@ def dfs(initial_state, target_pos, horizontal_cars):
             visited.add(state)
             successors = []
             for car in sorted(state.car_positions.keys()):
-                for move in ['R', 'L', 'D', 'U']:
+                for move in ['U', 'D', 'L', 'R']:
                     new_positions = get_new_positions(state.car_positions, car, move, horizontal_cars[car])
                     if is_valid_move(state.board, state.car_positions, car, new_positions):
                         new_board = [row[:] for row in state.board]
