@@ -32,14 +32,14 @@ def move_car(board, car_positions, car, new_positions):
 def get_new_positions(car_positions, car_to_move, move, horizontal):
     car_pos = car_positions[car_to_move]
     if horizontal:
-        if move == 'a':
+        if move == 'L':
             return [[pos[0], pos[1] - 1] for pos in car_pos]
-        elif move == 'd':
+        elif move == 'R':
             return [[pos[0], pos[1] + 1] for pos in car_pos]
     else:
-        if move == 'w':
+        if move == 'U':
             return [[pos[0] - 1, pos[1]] for pos in car_pos]
-        elif move == 's':
+        elif move == 'D':
             return [[pos[0] + 1, pos[1]] for pos in car_pos]
     return car_pos
 
@@ -71,7 +71,7 @@ def find_target_pos(board):
 # Función para escribir las métricas de rendimiento en un archivo de textoo
 def write_output(file_path, path, cost, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage):
     with open(file_path, 'w', encoding="utf-8") as file:
-        moves = [state.get_move() for state in path if state.get_move() is not None]
+        moves = [state.last_move for state in path if state.last_move is not None]
         file.write(f"Lista de movimientos: {moves}\n")
         file.write(f"Costo de la ruta: {cost}\n")
         file.write(f"Cantidad de nodos expandidos: {nodes_expanded}\n")
@@ -86,6 +86,7 @@ class GameState:
         self.car_positions = car_positions
         self.moves = moves
         self.parent = parent
+        self.last_move = None  
 
     def __eq__(self, other):
         return self.board == other.board
@@ -95,71 +96,45 @@ class GameState:
 
     def is_goal(self, target_pos):
         return self.board[target_pos[0]][target_pos[1]] == 'A'
-
-    def get_successors(self, horizontal_cars):
-        successors = []
-        for car in self.car_positions:
-            for move in ['w', 'a', 's', 'd']:
-                new_positions = get_new_positions(self.car_positions, car, move, horizontal_cars[car])
-                if is_valid_move(self.board, self.car_positions, car, new_positions):
-                    new_board = [row[:] for row in self.board]
-                    new_car_positions = {k: [pos[:] for pos in v] for k, v in self.car_positions.items()}
-                    move_car(new_board, new_car_positions, car, new_positions)
-                    successors.append(GameState(new_board, new_car_positions, self.moves + 1, self))
-        return successors
-
+    
     def print_path(self):
         if self.parent:
             self.parent.print_path()
         print_board(self.board)
 
-    def get_move(self):
-        if not self.parent:
-            return None
-        for car in self.car_positions:
-            if self.car_positions[car] != self.parent.car_positions[car]:
-                old_pos = self.parent.car_positions[car][0]
-                new_pos = self.car_positions[car][0]
-                if old_pos[0] < new_pos[0]:
-                    return f'{car}-D'
-                elif old_pos[0] > new_pos[0]:
-                    return f'{car}-U'
-                elif old_pos[1] < new_pos[1]:
-                    return f'{car}-R'
-                else:
-                    return f'{car}-L'
-        return None
-
 # deep first search
 def dfs(initial_state, target_pos, horizontal_cars):
     visited = set()
-    stack = [initial_state]
+    stack = [(initial_state, [])]
     nodes_expanded = 0
     max_search_depth = 0
 
     while stack:
-        state = stack.pop()
+        state, path = stack.pop()
         if state.is_goal(target_pos):
-            path = []
-            temp = state
-            while temp.parent:
-                path.append(temp)
-                temp = temp.parent
-            path.reverse()
-
-            write_output("output_dfs.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
-
+            write_output("output_dfs.txt", path, len(path), nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
             return state, path, nodes_expanded, len(path), max_search_depth
 
         if state not in visited:
             visited.add(state)
-            successors = state.get_successors(horizontal_cars)
-            successors.sort(key=lambda x: (x.car_positions.keys(), ['D', 'L', 'R', 'U'].index(get_move_direction(state, x))), reverse=True)
-            for successor in successors:
+            successors = []
+            for car in sorted(state.car_positions.keys()):
+                for move in ['R', 'L', 'D', 'U']:
+                    new_positions = get_new_positions(state.car_positions, car, move, horizontal_cars[car])
+                    if is_valid_move(state.board, state.car_positions, car, new_positions):
+                        new_board = [row[:] for row in state.board]
+                        new_car_positions = {k: [pos[:] for pos in v] for k, v in state.car_positions.items()}
+                        move_car(new_board, new_car_positions, car, new_positions)
+                        successor = GameState(new_board, new_car_positions, state.moves + 1, state)
+                        successor.last_move = f'{car}-{move}'
+                        successors.append(successor)
+
+            for successor in reversed(successors):
                 if successor not in visited:
-                    stack.append(successor)
+                    new_path = path + [successor]
+                    stack.append((successor, new_path))
                     nodes_expanded += 1
-                    max_search_depth = max(max_search_depth, successor.moves)
+                    max_search_depth = max(max_search_depth, len(new_path))
 
     return None, [], nodes_expanded, 0, max_search_depth
 
