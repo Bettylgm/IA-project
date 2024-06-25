@@ -94,12 +94,6 @@ class GameState:
         self.moves = moves
         self.parent = parent
 
-    def __eq__(self, other):
-        return self.board == other.board
-
-    def __hash__(self):
-        return hash(str(self.board))
-
     def is_goal(self, target_pos):
         return self.board[target_pos[0]][target_pos[1]] == 'A'
 
@@ -141,7 +135,7 @@ class GameState:
         # Comparison method for heapq
         return (self.moves, self.board) < (other.moves, other.board)
     
-def get_move_direction(parent_state, child_state):
+def moves_dfs(parent_state, child_state):
     for car in parent_state.car_positions:
         if parent_state.car_positions[car] != child_state.car_positions[car]:
             old_pos = parent_state.car_positions[car][0]
@@ -159,33 +153,36 @@ def get_move_direction(parent_state, child_state):
 # deep first search
 def dfs(initial_state, target_pos, horizontal_cars):
     visited = set()
-    stack = [initial_state]
+    stack = [(initial_state, [])]
     nodes_expanded = 0
     max_search_depth = 0
 
     while stack:
-        state = stack.pop()
+        state, path = stack.pop()
         if state.is_goal(target_pos):
-            path = []
-            temp = state
-            while temp.parent:
-                path.append(temp)
-                temp = temp.parent
-            path.reverse()
-
-            write_output("output_dfs.txt", path, state.moves, nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
-
+            write_output("output_dfs.txt", path, len(path), nodes_expanded, len(path), max_search_depth, time.time(), psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024))
             return state, path, nodes_expanded, len(path), max_search_depth
 
         if state not in visited:
             visited.add(state)
-            successors = state.get_successors(horizontal_cars)
-            successors.sort(key=lambda x: (x.car_positions.keys(), ['D', 'L', 'R', 'U'].index(get_move_direction(state, x))), reverse=True)
-            for successor in successors:
+            successors = []
+            for car in sorted(state.car_positions.keys()):
+                for move in ['U', 'D', 'L', 'R']:
+                    new_positions = get_new_positions(state.car_positions, car, move, horizontal_cars[car])
+                    if is_valid_move(state.board, state.car_positions, car, new_positions):
+                        new_board = [row[:] for row in state.board]
+                        new_car_positions = {k: [pos[:] for pos in v] for k, v in state.car_positions.items()}
+                        move_car(new_board, new_car_positions, car, new_positions)
+                        successor = GameState(new_board, new_car_positions, state.moves + 1, state)
+                        successor.last_move = f'{car}-{move}'
+                        successors.append(successor)
+
+            for successor in reversed(successors):
                 if successor not in visited:
-                    stack.append(successor)
+                    new_path = path + [successor]
+                    stack.append((successor, new_path))
                     nodes_expanded += 1
-                    max_search_depth = max(max_search_depth, successor.moves)
+                    max_search_depth = max(max_search_depth, len(new_path))
 
     return None, [], nodes_expanded, 0, max_search_depth
 
@@ -290,7 +287,7 @@ def start():
 
     level_number = int(input("Digite el número del nivel: "))
 
-    file_path = f"IA-project\Levels\Level{level_number}.txt"
+    file_path = f".\\Levels\\Level{level_number}.txt"
     if not os.path.isfile(file_path): 
         input("Nivel no válido o archivo no encontrado, presione Enter para continuar: ")
         clear()
