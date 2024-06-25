@@ -1,7 +1,7 @@
 .....B.CCC..DDD
 E......F...GGGG
 E..HHH.F.......
-II..J.....KKK..
+II........KKK..
 .............LL
 .M...NOOPP.....
 .M...N..QRRRRR.
