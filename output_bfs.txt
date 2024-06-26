@@ -1,0 +1,7 @@
+Lista de movimientos: ['E-U', 'A-R', 'A-R']
+Costo de la ruta: 3
+Cantidad de nodos expandidos: 226
+Profundidad: 3
+Máxima profundidad de la búsqueda: 4
+Tiempo de ejecución: 0.008771 segundos
+Máxima memoria RAM consumida: 0.02 MB
