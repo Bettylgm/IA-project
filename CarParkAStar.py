@@ -256,7 +256,7 @@ heuristic_weights_1 = {
 }
  
 heuristic_weights_2 = {
-    'blocking': 0.4,
+    'blocking': 0.5,
     'free_space': 0.2,
     'distance': 0.3
 }

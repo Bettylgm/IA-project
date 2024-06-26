@@ -9,7 +9,7 @@ def blocking_cars_heuristic(board, car_pos, target_pos, max_value, weight):
     return normalized_blocking_cars * weight
 
 # La segunda el espacio libre adelante 
-def free_space_heuristic(board, car_pos, max_value,weight):
+def free_space_heuristic(board, car_pos, max_value, weight):
     row, col = car_pos[0], car_pos[1]
     free_space = 0
     for i in range(col + 1, len(board[0])):
