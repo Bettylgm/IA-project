@@ -2,12 +2,9 @@ import heapq
 import os
 import time
 from collections import deque
-
 import psutil
 from Heuristics import (blocking_cars_heuristic, distance_goal_heuristic,
                         free_space_heuristic)
-
-
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -93,15 +90,20 @@ class GameState:
         self.car_positions = car_positions
         self.moves = moves
         self.parent = parent
+    
+    #    def __eq__(self, other):
+        # return self.board == other.board
 
-    def __eq__(self, other):
-        return self.board == other.board
-
-    def __hash__(self):
-        return hash(str(self.board))
+    # def __hash__(self):
+        # return hash(str(self.board))
 
     def is_goal(self, target_pos):
         return self.board[target_pos[0]][target_pos[1]] == 'A'
+    
+    def print_path(self):
+        if self.parent:
+            self.parent.print_path()
+        print_board(self.board)
 
     def get_successors(self, horizontal_cars):
         successors = []
@@ -114,11 +116,6 @@ class GameState:
                     move_car(new_board, new_car_positions, car, new_positions)
                     successors.append(GameState(new_board, new_car_positions, self.moves + 1, self))
         return successors
-
-    def print_path(self):
-        if self.parent:
-            self.parent.print_path()
-        print_board(self.board)
 
     def get_move(self):
         if not self.parent:
@@ -136,11 +133,11 @@ class GameState:
                 else:
                     return f'{car}-L'
         return None
-    
+
     def __lt__(self, other):
         return (self.moves, self.board) < (other.moves, other.board)
     
-def get_move_direction(parent_state, child_state):
+def moves_dfs(parent_state, child_state):
     for car in parent_state.car_positions:
         if parent_state.car_positions[car] != child_state.car_positions[car]:
             old_pos = parent_state.car_positions[car][0]
@@ -189,10 +186,14 @@ def dfs(initial_state, target_pos, horizontal_cars):
                     nodes_expanded += 1
                     max_search_depth = max(max_search_depth, len(new_path))
     return None, [], nodes_expanded, 0, max_search_depth
-    
+
+
+# Implementación del algoritmo BFS
 def bfs(initial_state, target_pos, horizontal_cars):
     visited = set()
     queue = deque([initial_state])
+    nodes_expanded = 0  
+    max_search_depth = 0  
     nodes_expanded = 0  
     max_search_depth = 0 
 
@@ -205,14 +206,14 @@ def bfs(initial_state, target_pos, horizontal_cars):
                 path.append(temp)
                 temp = temp.parent
             path.reverse()
-
             return state, path, nodes_expanded, len(path), max_search_depth
-
         visited.add(state)
         for successor in state.get_successors(horizontal_cars):
             if successor not in visited:
                 queue.append(successor)
                 visited.add(successor)
+                nodes_expanded += 1  
+                max_search_depth = max(max_search_depth, successor.moves)  
                 nodes_expanded += 1  
                 max_search_depth = max(max_search_depth, successor.moves) 
     return None, [], nodes_expanded, 0, max_search_depth
@@ -232,11 +233,12 @@ heuristic_weights = {
     'free_space': 0.3,
     'distance': 0.3
 }
-
 def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
     open_set = []
     heapq.heappush(open_set, (heuristics(initial_state, target_pos, max_value, weights), initial_state))
     visited = set()
+    nodes_expanded = 0  # Performance metric: expanded nodes
+    max_search_depth = 0  # Performance metric: maximum search depth
     nodes_expanded = 0  
     max_search_depth = 0  
 
@@ -249,20 +251,19 @@ def a_star(initial_state, target_pos, horizontal_cars, max_value, weights):
                 path.append(temp)
                 temp = temp.parent
             path.reverse()
-
             return state, path, nodes_expanded, len(path), max_search_depth
-
         visited.add(state)
         for successor in state.get_successors(horizontal_cars):
             if successor not in visited:
                 h = heuristics(successor, target_pos, max_value, weights)
                 heapq.heappush(open_set, (successor.moves + h, successor))
                 visited.add(successor)
+                nodes_expanded += 1  # Increment counter of expanded nodes
+                max_search_depth = max(max_search_depth, successor.moves)  # Update maximum search depth
                 nodes_expanded += 1  
                 max_search_depth = max(max_search_depth, successor.moves)  
 
     return None, [], nodes_expanded, 0, max_search_depth
-
 
 def start():
     print(r"""
@@ -287,24 +288,22 @@ def start():
           12- Nivel 12
           
           """)
-
     level_number = int(input("Digite el número del nivel: "))
-
     file_path = f".\\Levels\\Level{level_number}.txt"
     if not os.path.isfile(file_path): 
         input("Nivel no válido o archivo no encontrado, presione Enter para continuar: ")
         clear()
         return start()
-
     with open(file_path, "rt", encoding="utf-8") as f:
         level = [list(line) for line in f.read().splitlines()]
     return level
 
 def main():
-    board = start()
 
+    board = start()
     while True:
         clear()
+
         car_positions = find_car_positions(board)
         horizontal_cars = find_orientations(car_positions)
         target_pos = find_target_pos(board)
@@ -313,12 +312,11 @@ def main():
         print("1. BFS (Breadth-First Search)")
         print("2. DFS (Depth-First Search)")
         print("3. A* (A Star Search)")
-        choice = input("Ingrese su elección (1 o 2): ")
 
+        choice = input("Ingrese su elección (1 o 2): ")
         start_time = 0
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss
-
         initial_state = GameState(board, car_positions)
 
         if choice == '1':
@@ -371,7 +369,6 @@ def main():
             print("\nNo se encontró solución.")
 
         input("\nPresione Enter para continuar...")
-
         clear()
         board = start()
 
