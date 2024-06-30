@@ -260,7 +260,11 @@ heuristic_weights_2 = {
     'free_space': 0.2,
     'distance': 0.3
 }
- 
+heuristic_weights_3 = {
+    'blocking': 0.33,
+    'free_space': 0.33,
+    'distance': 0.33
+} 
 
 
 def a_star(initial_state, target_pos, horizontal_cars, max_value, weights, heuristic_types):
@@ -370,12 +374,19 @@ Config 2
     'blocking': 0.4,
     'free_space': 0.1,
     'distance': 0.2
+    
+Config 3 (Pesos Iguales)
+    'blocking': 0.33,
+    'free_space': 0.33,
+    'distance': 0.33
 """)
             config = int(input("- "))
             if config == 1:
                 heuristic_weights = heuristic_weights_1
             elif config == 2:
                 heuristic_weights = heuristic_weights_2
+            elif config == 3:
+                heuristic_weights = heuristic_weights_3
             else:
                 print("Opción inválida")
                 return
