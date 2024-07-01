@@ -1,5 +1,6 @@
 import heapq
 import os
+import sys
 import time
 from collections import deque
 
@@ -7,7 +8,7 @@ import psutil
 
 from Heuristics import (blocking_cars_heuristic, distance_goal_heuristic,
                         free_space_heuristic)
-import sys
+
 sys.setrecursionlimit(10000)  
 
 def clear():
@@ -462,7 +463,7 @@ Config 3 (Pesos Iguales)
         end_time = time.time()
         final_memory = process.memory_info().rss
         running_time = end_time - start_time
-        max_ram_usage = (final_memory - initial_memory) / 1024 / 1024
+        max_ram_usage = (final_memory - initial_memory) / (1024 * 1024)
 
         if solution:
             print("\nTablero final:")
