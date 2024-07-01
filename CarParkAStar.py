@@ -348,7 +348,7 @@ def main():
         print("2. DFS (Depth-First Search)")
         print("3. A* (A Star Search)")
 
-        choice = input("Ingrese su elección (1 o 2): ")
+        choice = input("Ingrese su elección (1, 2 o 3): ")
         start_time = 0
         process = psutil.Process(os.getpid())
         initial_memory = process.memory_info().rss

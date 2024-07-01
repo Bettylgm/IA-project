@@ -1,3 +1,4 @@
 output_a_star.txt
 output_dfs.txt
+output_bfs.txt
 __pycache__/
