@@ -7,7 +7,8 @@ import psutil
 
 from Heuristics import (blocking_cars_heuristic, distance_goal_heuristic,
                         free_space_heuristic)
-
+import sys
+sys.setrecursionlimit(10000)  
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -466,8 +467,8 @@ Config 3 (Pesos Iguales)
         if solution:
             print("\nTablero final:")
             print_board(solution.board)
-            print("\nSolución encontrada:")
-            solution.print_path()
+            print("\nSolución encontrada.")
+            # solution.print_path()
             
             write_output(output_file, path, solution.moves, nodes_expanded, search_depth, max_search_depth, running_time, max_ram_usage)
             print(f"\nLas métricas de rendimiento se han guardado en {output_file}")
